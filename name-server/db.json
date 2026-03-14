@@ -1,0 +1,18 @@
+{
+  "users": {
+    "1": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoRVXetqsEd0SIbyZ+xKk\r\nirxz9htFb3/968AJZ+4NwU1QbVp69awCcpHW8mZVW+UBHfuGpdor6Zhhn/9SxIP0\r\nKivYg/6Wbe9sZ1rMxloluhzRvIQkgzuP6aDGQBUZoRO5/aNAgn0T633Mfrc1jkgS\r\nTRfw3b7gmLmlGDoZGMWv7zt9Bm1eRwQ/Nd90S6w0fbPnoIcuYls7p8cy+2KSpTnY\r\nI83LU8DfTb3FeUC7YTlIiy3o263CgC/eu/yHAzlgthuRQeZCcY4WQAc27ulcwecm\r\nc6BQODdfRFNd3RI/gwvR+qPUMWfGehQUM1BCAr2UZ+r/Hf9NzXsgOw8xuMsI7z/Y\r\nbwIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+      "displayName": "1",
+      "passwordHash": "$2a$10$amHqOW5jlkpeW26Wipi94OsYnqYK6wIIpAVBjq9U4XN9.Xk8Xij9q",
+      "registeredAt": 1773441602014,
+      "lastSeen": 1773447417387
+    },
+    "2": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyvl9q4U0OADhQdYOXGpM\r\naroRhk4o9/9HDfD4H923OaF+3bB7OrlCIJMtg9W9MY4ca6M6F3bNbezXwHU8UDLo\r\n2jpk4Pupb7HaF3eGyoz/c80/iE+6nwDktyv/pd4V/oSyBMWwidUs8cglTk/HypKl\r\nTBRWflKK1uUR8U92epaWOVpnvWxOGdaxzJqEgTvRbyY1RqwmZySgLIU0t9eKWNfa\r\nT/YgmfvlFQGUmtzKvvF7+Yu7q405y2NeBV3maAycvKPeML5qyRbfei0YzbJMa8GE\r\nD1VK/VA/IqQnYS6O6VUzfnchWQCDYVInN4l/r+k+PFkm/NUkrhnksKSFvk/NLdd6\r\nzQIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+      "displayName": "2",
+      "passwordHash": "$2a$10$qpfDx6N2o/RpUjjEEQd5Ouzw0D22OPSpqiyOjqLyNxbH3bf3XFf3K",
+      "registeredAt": 1773441618383,
+      "lastSeen": 1773449493935
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "pochtovik",
+  "version": "1.0.0",
+  "description": "Secure file-based messenger Pochtovik with Yandex Cloud storage and hybrid RSA+AES encryption",
+  "private": true,
+  "workspaces": [
+    "client",
+    "name-server"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd client && npm install && cd ../name-server && npm install",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd name-server && npm run dev",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": [
+    "messenger",
+    "encryption",
+    "yandex-cloud",
+    "security"
+  ],
+  "author": "",
+  "license": "MIT"
+}
