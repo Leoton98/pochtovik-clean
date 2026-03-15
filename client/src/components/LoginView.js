@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../styles/modern-ui.css';
 
 // SVG Icons
 const Icons = {
@@ -76,75 +77,92 @@ function LoginView({ onLogin, onRegister }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, hsla(251, 67%, 33%, 1.00) 0%, #764ba2 100%)',
-      padding: '2rem',
-      fontFamily: "'Inter', sans-serif"
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '1.5rem',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     }}>
-      <div className="card" style={{
-        maxWidth: '450px',
+      <div className="login-card" style={{
+        maxWidth: '420px',
         width: '100%',
-        padding: '3rem',
+        padding: '2rem',
+        background: 'rgba(255, 255, 255, 0.98)',
+        borderRadius: '24px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
         animation: 'slideUp 0.5s ease'
       }}>
         {/* Logo */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          marginBottom: '3rem'
+          marginBottom: '2rem',
+          marginTop: '1rem'
         }}>
           <img 
             src="/logo.png" 
-            alt="Почтовик Logo"
+            alt="Почтовик"
             style={{
-              width: '360px',
-              height: '360px',
+              width: '120px',
+              height: '120px',
               objectFit: 'contain',
-              filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5))'
+              filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))'
             }}
           />
         </div>
         
+        <h1 style={{
+          textAlign: 'center',
+          fontSize: '28px',
+          fontWeight: '800',
+          color: '#1a1a2e',
+          marginBottom: '0.5rem',
+          letterSpacing: '-0.5px'
+        }}>Почтовик</h1>
+        
+        <p style={{
+          textAlign: 'center',
+          color: '#6b7280',
+          fontSize: '15px',
+          marginBottom: '2rem'
+        }}>
+          Безопасный мессенджер
+        </p>
         
         {error && (
           <div style={{ 
-            backgroundColor: 'rgba(245, 87, 108, 0.9)',
-            backdropFilter: 'blur(10px)',
-            padding: '1rem 1.25rem',
+            backgroundColor: '#fee2e2',
+            padding: '1rem',
             borderRadius: '12px',
             marginBottom: '1.5rem',
-            color: 'white',
+            color: '#dc2626',
             fontWeight: '500',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 16px rgba(245, 87, 108, 0.3)'
+            border: '1px solid #fecaca',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
-            ⚠️ {error}
+            <span>⚠️</span>
+            <span>{error}</span>
           </div>
         )}
 
         {view === 'login' ? (
           <form onSubmit={handleLoginSubmit}>
             <h2 style={{ 
-              marginBottom: '1rem',
-              fontSize: '2rem',
+              marginBottom: '1.5rem',
+              fontSize: '22px',
               textAlign: 'center',
-              fontWeight: '700'
-            }}> Вход</h2>
+              fontWeight: '700',
+              color: '#1f2937'
+            }}>Вход</h2>
             
-            <p style={{ 
-              textAlign: 'center',
-              color: '#aaa',
-              marginBottom: '2rem',
-              fontSize: '0.95rem'
-            }}>
-              Введите логин и пароль
-            </p>
-            
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 fontWeight: '600',
-                fontSize: '1rem'
+                fontSize: '14px',
+                color: '#374151'
               }}>Логин</label>
               <div style={{ position: 'relative' }}>
                 <span style={{
@@ -152,13 +170,15 @@ function LoginView({ onLogin, onRegister }) {
                   left: '1rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: '#aaa'
+                  color: '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}>
                   <Icons.User />
                 </span>
                 <input
                   type="text"
-                  className="input"
+                  className="input-modern"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   required
@@ -166,19 +186,27 @@ function LoginView({ onLogin, onRegister }) {
                   autoFocus
                   style={{ 
                     width: '100%',
-                    padding: '1.25rem 1.25rem 1.25rem 3rem',
-                    fontSize: '1.1rem'
+                    padding: '14px 14px 14px 44px',
+                    fontSize: '16px',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    boxSizing: 'border-box',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    color: '#1f2937'
                   }}
                 />
               </div>
             </div>
             
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 fontWeight: '600',
-                fontSize: '1rem'
+                fontSize: '14px',
+                color: '#374151'
               }}>Пароль</label>
               <div style={{ position: 'relative' }}>
                 <span style={{
@@ -186,21 +214,30 @@ function LoginView({ onLogin, onRegister }) {
                   left: '1rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: '#aaa'
+                  color: '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}>
                   <Icons.Lock />
                 </span>
                 <input
                   type="password"
-                  className="input"
+                  className="input-modern"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
                   style={{ 
                     width: '100%',
-                    padding: '1.25rem 1.25rem 1.25rem 3rem',
-                    fontSize: '1.1rem'
+                    padding: '14px 14px 14px 44px',
+                    fontSize: '16px',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    boxSizing: 'border-box',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    color: '#1f2937'
                   }}
                 />
               </div>
@@ -208,27 +245,42 @@ function LoginView({ onLogin, onRegister }) {
 
             <button 
               type="submit" 
-              className="btn btn-primary" 
+              className="btn-primary-modern" 
               disabled={loading}
               style={{ 
                 width: '100%',
                 marginBottom: '1rem',
-                padding: '1.25rem',
-                fontSize: '1.1rem',
-                fontWeight: '700'
+                padding: '16px',
+                fontSize: '16px',
+                fontWeight: '700',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)'
               }}
             >
-              {loading ? '⏳ Вход...' : 'Войти'}
+              {loading ? '⏳ Вход...' : 'Войти →'}
             </button>
 
             <button 
               type="button" 
-              className="btn btn-secondary" 
+              className="btn-secondary-modern" 
               onClick={() => setView('register')}
               style={{ 
                 width: '100%',
-                padding: '1rem',
-                fontWeight: '600'
+                padding: '14px',
+                fontWeight: '600',
+                fontSize: '15px',
+                borderRadius: '12px',
+                background: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
             >
               Регистрация
@@ -237,59 +289,99 @@ function LoginView({ onLogin, onRegister }) {
         ) : (
           <form onSubmit={handleRegisterSubmit}>
             <h2 style={{ 
-              marginBottom: '1rem',
-              fontSize: '2rem',
+              marginBottom: '1.5rem',
+              fontSize: '22px',
               textAlign: 'center',
-              fontWeight: '700'
+              fontWeight: '700',
+              color: '#1f2937'
             }}>Регистрация</h2>
             
-            <p style={{ 
-              textAlign: 'center',
-              color: '#aaa',
-              marginBottom: '2rem',
-              fontSize: '0.95rem'
-            }}>
-              Придумайте логин и пароль
-            </p>
-            
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 fontWeight: '600',
-                fontSize: '0.95rem'
+                fontSize: '14px',
+                color: '#374151'
               }}>Логин</label>
               <input
                 type="text"
-                className="input"
+                className="input-modern"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 required
                 placeholder="alice"
                 style={{ 
                   width: '100%',
-                  padding: '1rem 1.25rem'
+                  padding: '14px',
+                  fontSize: '16px',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#1f2937'
                 }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 fontWeight: '600',
-                fontSize: '0.95rem'
+                fontSize: '14px',
+                color: '#374151'
               }}>Пароль</label>
               <input
                 type="password"
-                className="input"
+                className="input-modern"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
                 style={{ 
                   width: '100%',
-                  padding: '1rem 1.25rem'
+                  padding: '14px',
+                  fontSize: '16px',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#1f2937'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                fontWeight: '600',
+                fontSize: '14px',
+                color: '#374151'
+              }}>Подтверждение пароля</label>
+              <input
+                type="password"
+                className="input-modern"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{ 
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '16px',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -297,68 +389,71 @@ function LoginView({ onLogin, onRegister }) {
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 fontWeight: '600',
-                fontSize: '0.95rem'
-              }}>Подтверждение пароля</label>
-              <input
-                type="password"
-                className="input"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                style={{ 
-                  width: '100%',
-                  padding: '1rem 1.25rem'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.75rem',
-                fontWeight: '600',
-                fontSize: '0.95rem'
+                fontSize: '14px',
+                color: '#374151'
               }}>Никнейм</label>
               <input
                 type="text"
-                className="input"
+                className="input-modern"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
                 placeholder="Alice"
                 style={{ 
                   width: '100%',
-                  padding: '1rem 1.25rem'
+                  padding: '14px',
+                  fontSize: '16px',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#1f2937'
                 }}
               />
             </div>
 
             <button 
               type="submit" 
-              className="btn btn-primary" 
+              className="btn-primary-modern" 
               disabled={loading || !userId}
               style={{ 
                 width: '100%',
                 marginBottom: '1rem',
-                padding: '1.25rem',
-                fontSize: '1.1rem',
-                fontWeight: '700'
+                padding: '16px',
+                fontSize: '16px',
+                fontWeight: '700',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)'
               }}
             >
-              {loading ? 'Регистрация...' : 'Создать аккаунт'}
+              {loading ? '⏳ Создание...' : 'Создать аккаунт →'}
             </button>
 
             <button 
               type="button" 
-              className="btn btn-secondary" 
+              className="btn-secondary-modern" 
               onClick={() => setView('login')}
               style={{ 
                 width: '100%',
-                padding: '1rem',
-                fontWeight: '600'
+                padding: '14px',
+                fontWeight: '600',
+                fontSize: '15px',
+                borderRadius: '12px',
+                background: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
             >
               ← Назад ко входу

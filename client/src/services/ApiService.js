@@ -94,6 +94,48 @@ class ApiService {
   }
 
   /**
+   * Register device for multi-device support
+   */
+  async registerDevice(userId, deviceId, deviceInfo) {
+    try {
+      const response = await this.api.post('/device/register', {
+        userId,
+        deviceId,
+        publicKey: deviceInfo.publicKey,
+        deviceName: deviceInfo.deviceName,
+        platform: deviceInfo.platform
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Get all devices for user
+   */
+  async getUserDevices(userId) {
+    try {
+      const response = await this.api.get(`/devices/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Remove device
+   */
+  async removeDevice(userId, deviceId) {
+    try {
+      const response = await this.api.delete(`/device/${userId}/${deviceId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Check if name server is available
    */
   async checkHealth() {

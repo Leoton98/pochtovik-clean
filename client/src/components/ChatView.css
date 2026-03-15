@@ -1,0 +1,295 @@
+/* ChatView Mobile-First Modern Design */
+
+/* Base mobile styles */
+.chat-view-container {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Safe area for notched devices */
+@supports (padding: max(0px)) {
+  .chat-header {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .message-input-area {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Overlay for mobile menu */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hamburger-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.625rem;
+  cursor: pointer;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hamburger-button:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tablet and smaller */
+@media (max-width: 768px) {
+  /* Main container switches to column layout */
+  .chat-view-container {
+    flex-direction: column;
+  }
+  
+  /* Sidebar becomes top bar or drawer */
+  .chat-sidebar {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    max-height: 40vh !important;
+  }
+  
+  /* Chat area takes full width */
+  .chat-area {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Header adjustments */
+  .chat-header {
+    padding: 0.75rem !important;
+  }
+  
+  /* Hamburger button visible on mobile */
+  .hamburger-button {
+    display: flex !important;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  /* Reduce logo size significantly */
+  .chat-logo {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  /* Smaller text */
+  .chat-title {
+    font-size: 1.4rem !important;
+  }
+  
+  .user-name {
+    font-size: 1rem !important;
+  }
+  
+  /* Compact header */
+  .chat-header {
+    padding: 0.75rem !important;
+  }
+  
+  .chat-header-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1.1rem !important;
+  }
+  
+  .chat-header-title {
+    font-size: 1.1rem !important;
+  }
+  
+  .chat-header-subtitle {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Search bar adjustments */
+  .search-input {
+    font-size: 0.85rem !important;
+    padding: 0.625rem 0.75rem 0.625rem 2.5rem !important;
+  }
+  
+  /* Contact list items more compact */
+  .contact-item {
+    padding: 0.625rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Smaller avatars on mobile */
+  .contact-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 1.1rem !important;
+  }
+  
+  /* Contact name and message preview smaller */
+  .contact-name {
+    font-size: 0.9rem !important;
+  }
+  
+  .contact-preview {
+    font-size: 0.75rem !important;
+  }
+  
+  .unread-badge {
+    font-size: 0.6rem !important;
+    padding: 0.15rem 0.4rem !important;
+  }
+  
+  /* Message bubbles */
+  .message-bubble {
+    max-width: 85% !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.85rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .message-bubble-wrapper {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .message-photo img {
+    max-height: 250px !important;
+    border-radius: 8px !important;
+  }
+  
+  .message-voice {
+    min-width: 180px !important;
+  }
+  
+  .message-text {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  .message-timestamp {
+    font-size: 0.65rem !important;
+  }
+  
+  /* Input area */
+  .message-input {
+    padding: 0.75rem 0.875rem !important;
+    font-size: 0.85rem !important;
+    min-height: 40px !important;
+    max-height: 100px !important;
+    border-radius: 20px !important;
+  }
+  
+  /* Action buttons smaller */
+  .action-button {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0.625rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .send-button {
+    min-width: 48px !important;
+    height: 48px !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: 1.1rem !important;
+    border-radius: 20px !important;
+  }
+  
+  /* Emoji picker */
+  .emoji-button {
+    font-size: 1.2rem !important;
+    padding: 0.125rem !important;
+  }
+  
+  /* Photo preview compact */
+  .photo-preview {
+    max-width: 120px !important;
+    max-height: 120px !important;
+    border-radius: 8px !important;
+  }
+  
+  .photo-preview-text {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Voice recording */
+  .voice-wave-bar {
+    height: 25px !important;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .chat-title {
+    font-size: 1.2rem !important;
+  }
+  
+  .message-bubble {
+    max-width: 90% !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .contact-name {
+    font-size: 0.85rem !important;
+  }
+  
+  .contact-preview {
+    font-size: 0.7rem !important;
+  }
+  
+  .message-input {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chat-sidebar {
+    max-height: 35vh !important;
+  }
+  
+  .message-input-area {
+    padding: 0.5rem !important;
+  }
+}
+
+/* Safe area insets for notched devices (iPhone X and newer) */
+@supports (padding: max(0px)) {
+  .chat-header {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+  }
+  
+  .message-input-area {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}

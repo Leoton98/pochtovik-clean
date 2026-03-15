@@ -1,0 +1,28 @@
+{
+  "users": {
+    "testuser": {
+      "publicKey": "test-public-key",
+      "displayName": "Test User",
+      "passwordHash": "$2a$10$MhE1myZAie1cjCNYgJ.DOucbUfGAHy0vLryE1rX7iGtr7QwTrdESi",
+      "registeredAt": 1773572262496,
+      "lastSeen": 1773572262496,
+      "devices": [
+        "device-desktop-002"
+      ]
+    }
+  },
+  "sessions": {},
+  "devices": {
+    "testuser": [
+      {
+        "deviceId": "device-desktop-002",
+        "publicKey": "desktop-pub-key",
+        "deviceName": "Windows PC",
+        "platform": "web",
+        "registeredAt": 1773572285328,
+        "lastSeen": 1773572285328,
+        "isActive": true
+      }
+    ]
+  }
+}

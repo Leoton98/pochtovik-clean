@@ -82,11 +82,29 @@ class CryptoManager {
    * @returns {string} Encrypted data as base64 string
    */
   encryptRSA(data, publicKeyPem) {
-    const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-    const encrypted = publicKey.encrypt(data, 'RSA-OAEP', {
-      md: forge.md.sha256.create()
-    });
-    return forge.util.encode64(encrypted);
+    try {
+      console.log('🔐 Шифрование RSA:', {
+        dataLength: data.length,
+        hasPublicKey: !!publicKeyPem,
+        publicKeyFormat: publicKeyPem?.includes('-----BEGIN PUBLIC KEY-----') ? 'PEM' : 'INVALID'
+      });
+      
+      if (!publicKeyPem || !publicKeyPem.includes('-----BEGIN PUBLIC KEY-----')) {
+        throw new Error('Invalid public key PEM format');
+      }
+      
+      const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+      const encrypted = publicKey.encrypt(data, 'RSA-OAEP', {
+        md: forge.md.sha256.create()
+      });
+      const result = forge.util.encode64(encrypted);
+      
+      console.log('✅ Успешно зашифровано, длина:', result.length);
+      return result;
+    } catch (error) {
+      console.error('❌ Ошибка шифрования RSA:', error);
+      throw new Error('RSA encryption failed: ' + error.message);
+    }
   }
 
   /**
@@ -96,12 +114,27 @@ class CryptoManager {
    * @returns {string} Decrypted data
    */
   decryptRSA(encryptedBase64, privateKeyPem) {
-    const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
-    const encrypted = forge.util.decode64(encryptedBase64);
-    const decrypted = privateKey.decrypt(encrypted, 'RSA-OAEP', {
-      md: forge.md.sha256.create()
-    });
-    return decrypted;
+    try {
+      // Validate PEM format
+      if (!privateKeyPem || !privateKeyPem.includes('-----BEGIN') || !privateKeyPem.includes('PRIVATE KEY-----')) {
+        throw new Error('Invalid private key format. Expected PEM format.');
+      }
+      
+      const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+      
+      if (!encryptedBase64) {
+        throw new Error('No encrypted data provided');
+      }
+      
+      const encrypted = forge.util.decode64(encryptedBase64);
+      const decrypted = privateKey.decrypt(encrypted, 'RSA-OAEP', {
+        md: forge.md.sha256.create()
+      });
+      return decrypted;
+    } catch (error) {
+      console.error('RSA Decryption error:', error);
+      throw new Error('Failed to decrypt: ' + error.message);
+    }
   }
 
   /**
@@ -143,17 +176,23 @@ class CryptoManager {
    * @returns {string} Decrypted message
    */
   decryptMessage(messagePackage, privateKeyPem) {
-    // Decrypt AES key with RSA private key
-    const aesKey = this.decryptRSA(messagePackage.encryptedAesKey, privateKeyPem);
-    
-    // Decrypt message with AES key
-    const message = this.decryptAES(
-      messagePackage.encryptedData,
-      aesKey,
-      messagePackage.iv
-    );
-    
-    return message;
+    try {
+      // Decrypt AES key with RSA private key
+      const aesKeyHex = this.decryptRSA(messagePackage.encryptedAesKey, privateKeyPem);
+      
+      // Decrypt message with AES key
+      const message = this.decryptAES(
+        messagePackage.encryptedData,
+        aesKeyHex,
+        messagePackage.iv
+      );
+      
+      return message;
+    } catch (error) {
+      console.error('Message decryption error:', error);
+      console.error('Invalid private key or corrupted message');
+      throw new Error('Cannot decrypt message: ' + error.message);
+    }
   }
 
   /**
@@ -196,6 +235,22 @@ class CryptoManager {
     const md = forge.md.sha256.create();
     md.update(der);
     return md.digest().toHex();
+  }
+
+  /**
+   * Extract public key from private key PEM
+   * @param {string} privateKeyPem - RSA private key (PEM)
+   * @returns {string} Public key in PEM format
+   */
+  extractPublicKey(privateKeyPem) {
+    try {
+      const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+      const publicKey = privateKey.publicKey || forge.pki.setRsaPublicKey(privateKey.n, privateKey.e);
+      return forge.pki.publicKeyToPem(publicKey);
+    } catch (error) {
+      console.error('Error extracting public key:', error);
+      throw new Error('Failed to extract public key from private key');
+    }
   }
 }
 

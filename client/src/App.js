@@ -5,13 +5,14 @@ import ApiService from './services/ApiService';
 import LoginView from './components/LoginView';
 import ChatView from './components/ChatView';
 import SettingsView from './components/SettingsView';
+import DevicesView from './components/DevicesView';
 import DEFAULT_CONFIG from './config/default.config';
 import storageAdapter from './utils/StorageAdapter';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [privateKey, setPrivateKey] = useState(null);
-  const [view, setView] = useState('login'); // login, chat, settings
+  const [view, setView] = useState('login'); // login, chat, settings, devices
   const [apiService, setApiService] = useState(null);
   const [cloudClient, setCloudClient] = useState(null);
 
@@ -54,7 +55,7 @@ function App() {
   const handleLogin = async (userId, password) => {
     try {
       // Login to name server
-      const api = new ApiService('https://pochtovik-name-server.onrender.com');
+      const api = new ApiService('http://localhost:3001');
       const loginResult = await api.login(userId, password);
       
       // Get or generate private key
@@ -71,13 +72,50 @@ function App() {
         if (!keyData.publicKey) {
           await api.registerUser(userId, password, keyPair.publicKey, loginResult.displayName);
         }
+      } else {
+        // Validate private key format
+        console.log('Loaded private key format:', privateKeyPem.substring(0, 30) + '...');
+        if (!privateKeyPem.includes('-----BEGIN RSA PRIVATE KEY-----') && 
+            !privateKeyPem.includes('-----BEGIN PRIVATE KEY-----')) {
+          console.error('Invalid private key format, regenerating...');
+          const keyPair = CryptoManager.generateRSAKeyPair(2048);
+          privateKeyPem = keyPair.privateKey;
+          await storageAdapter.set('privateKey', privateKeyPem);
+        }
+      }
+      
+      // Generate device ID for multi-device support
+      let deviceId = await storageAdapter.get('deviceId');
+      if (!deviceId) {
+        deviceId = `device-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        await storageAdapter.set('deviceId', deviceId);
+      }
+      
+      // Register this device on the server
+      try {
+        const deviceInfo = {
+          deviceId,
+          publicKey: CryptoManager.extractPublicKey(privateKeyPem),
+          deviceName: navigator.userAgent.includes('Android') || navigator.userAgent.includes('Mobile') 
+            ? 'Mobile Device' 
+            : 'Desktop',
+          platform: navigator.userAgent.includes('Android') || navigator.userAgent.includes('Mobile')
+            ? 'mobile'
+            : 'web'
+        };
+        
+        await api.registerDevice(userId, deviceId, deviceInfo);
+        console.log('📱 Device registered:', deviceId);
+      } catch (deviceError) {
+        console.error('Warning: Could not register device:', deviceError);
+        // Continue anyway - device registration is not critical
       }
       
       // Save user config
       const userConfig = {
         userId,
         displayName: loginResult.displayName,
-        nameServerUrl: 'https://pochtovik-name-server.onrender.com',
+        nameServerUrl: 'http://localhost:3001',
         bucket: DEFAULT_CONFIG.bucket,
         accessKeyId: DEFAULT_CONFIG.accessKeyId,
         secretAccessKey: DEFAULT_CONFIG.secretAccessKey,
@@ -116,14 +154,37 @@ function App() {
       const keyPair = CryptoManager.generateRSAKeyPair(2048);
       
       // Register on name server with password
-      const api = new ApiService('https://pochtovik-name-server.onrender.com');
+      const api = new ApiService('http://localhost:3001');
       await api.registerUser(userId, password, keyPair.publicKey, displayName);
+
+      // Generate device ID
+      const deviceId = `device-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      await storageAdapter.set('deviceId', deviceId);
+      
+      // Register this device
+      try {
+        const deviceInfo = {
+          deviceId,
+          publicKey: keyPair.publicKey,
+          deviceName: navigator.userAgent.includes('Android') || navigator.userAgent.includes('Mobile') 
+            ? 'Mobile Device' 
+            : 'Desktop',
+          platform: navigator.userAgent.includes('Android') || navigator.userAgent.includes('Mobile')
+            ? 'mobile'
+            : 'web'
+        };
+        
+        await api.registerDevice(userId, deviceId, deviceInfo);
+        console.log('📱 Device registered:', deviceId);
+      } catch (deviceError) {
+        console.error('Warning: Could not register device:', deviceError);
+      }
 
       // Save user config
       const userConfig = {
         userId,
         displayName,
-        nameServerUrl: 'https://pochtovik-name-server.onrender.com',
+        nameServerUrl: 'http://localhost:3001',
         bucket: DEFAULT_CONFIG.bucket,
         accessKeyId: DEFAULT_CONFIG.accessKeyId,
         secretAccessKey: DEFAULT_CONFIG.secretAccessKey,
@@ -172,6 +233,15 @@ function App() {
             localStorage.setItem(`avatar_${currentUser.userId}`, base64);
             setView('chat');
           }}
+          apiService={apiService}
+          onOpenDevices={() => setView('devices')}
+        />
+      )}
+      {view === 'devices' && currentUser && (
+        <DevicesView
+          apiService={apiService}
+          userId={currentUser.userId}
+          onBack={() => setView('settings')}
         />
       )}
     </div>

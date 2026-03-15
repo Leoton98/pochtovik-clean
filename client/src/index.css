@@ -335,3 +335,242 @@ button svg {
 button:hover svg {
   transform: scale(1.1);
 }
+
+/* ========================================
+   MOBILE RESPONSIVENESS
+   ======================================== */
+
+/* Mobile Navigation Header */
+.mobile-header {
+  display: none;
+}
+
+/* Chat Container Mobile */
+.chat-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Messages List Mobile */
+.messages-list {
+  padding: 1rem;
+}
+
+/* Message Bubble Mobile */
+.message-bubble {
+  max-width: 85%;
+  word-wrap: break-word;
+}
+
+/* Input Area Mobile */
+.message-input-area {
+  padding: 0.75rem;
+}
+
+.message-input-area input {
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+/* Contacts Sidebar Mobile */
+.contacts-sidebar {
+  width: 100%;
+}
+
+/* Tablet Breakpoint */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .chat-container {
+    height: calc(100vh - 120px);
+  }
+
+  .messages-list {
+    height: calc(100vh - 250px);
+  }
+
+  .message-bubble {
+    max-width: 90%;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+  
+  /* ChatView mobile adjustments */
+  .App > div {
+    flex-direction: column;
+  }
+}
+
+/* Mobile Breakpoint */
+@media (max-width: 480px) {
+  /* Typography adjustments */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+
+  /* Button sizing */
+  .btn {
+    width: 100%;
+    padding: 0.875rem 1rem;
+  }
+
+  .btn-icon {
+    width: auto;
+    padding: 0.75rem;
+  }
+
+  /* Input fields */
+  .input {
+    font-size: 16px; /* Prevent iOS zoom */
+    padding: 0.75rem 1rem;
+  }
+
+  /* Chat specific */
+  .chat-view {
+    flex-direction: column;
+  }
+
+  .contacts-sidebar {
+    display: none; /* Hide on mobile, show in drawer */
+  }
+
+  .contacts-sidebar.mobile-open {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: linear-gradient(135deg, #c96fd4ff 0%, #764ba2 100%);
+  }
+
+  .message-input-area {
+    flex-wrap: wrap;
+  }
+
+  .message-input-area button {
+    flex: 1;
+    min-width: 50px;
+  }
+
+  /* Cards and modals */
+  .card {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    width: 98%;
+    max-width: none;
+    padding: 1.25rem;
+  }
+
+  /* Settings panel */
+  .settings-panel {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  /* Avatar sizes */
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .avatar-large {
+    width: 80px;
+    height: 80px;
+  }
+
+  /* Contact list items */
+  .contact-item {
+    padding: 0.75rem;
+  }
+
+  /* Message timestamp */
+  .message-timestamp {
+    font-size: 0.7rem;
+  }
+
+  /* Scroll improvements */
+  .chat-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ChatView specific mobile styles */
+  .App {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+/* Small Mobile Breakpoint */
+@media (max-width: 360px) {
+  .message-bubble {
+    max-width: 95%;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+  }
+
+  .input {
+    font-size: 14px;
+  }
+}
+
+/* Landscape orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chat-container {
+    height: calc(100vh - 80px);
+  }
+
+  .messages-list {
+    height: calc(100vh - 180px);
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+}
+
+/* Touch-friendly elements */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .input,
+  .contact-item,
+  .message-action-btn {
+    min-height: 44px; /* Apple HIG minimum touch target */
+  }
+
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .message-input-area {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}

@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CryptoManager from '../crypto/CryptoManager';
+import RealtimeClient from '../services/RealtimeClient';
+import './ChatView.css';
+import '../styles/modern-ui.css';
 
 // SVG Icons Collection
 const Icons = {
+  Menu: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  ),
+  Close: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  ),
   Settings: () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"></circle>
@@ -152,6 +168,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
   const [audioStream, setAudioStream] = useState(null);
   const [playingMessageId, setPlayingMessageId] = useState(null);
   
+  // State для управления видимостью сайдбара
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // State для WebSocket и онлайн-статусов
+  const [realtimeClient, setRealtimeClient] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState({});
+  
   // Handle avatar upload
   const handleAvatarUpload = async (file) => {
     try {
@@ -209,12 +233,53 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
 
   // Load contacts and messages on mount
   useEffect(() => {
+    // Initialize WebSocket connection
+    const initRealtime = async () => {
+      try {
+        const realtime = new RealtimeClient('https://pochtovik-name-server.onrender.com');
+        await realtime.connect(user.userId);
+        setRealtimeClient(realtime);
+        
+        console.log('✅ WebSocket connected for', user.userId);
+        
+        // Handle incoming messages
+        realtime.onMessage((message) => {
+          if (message.type === 'presence') {
+            // Update online status
+            setOnlineUsers(prev => ({
+              ...prev,
+              [message.userId]: message.online
+            }));
+          }
+        });
+      } catch (error) {
+        console.error('❌ Failed to connect WebSocket:', error);
+      }
+    };
+    
+    initRealtime();
+    
     loadContacts();
     loadMessages();
     
-    // Poll for new messages every 5 seconds
+    // Poll for new messages every 5 seconds (will be replaced with WebSocket)
     const interval = setInterval(loadMessages, 5000);
-    return () => clearInterval(interval);
+    
+    // Check screen size for mobile detection
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', checkMobile);
+      if (realtimeClient) {
+        realtimeClient.disconnect();
+      }
+    };
   }, []);
 
   const loadContacts = async () => {
@@ -240,7 +305,16 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
       if (contactMessages.length > 0) {
         // Decrypt messages
         const decryptedMessages = contactMessages.map(msg => {
-          const decryptedText = CryptoManager.decryptMessage(msg, privateKey);
+          try {
+            console.log('Decrypting message:', { 
+              hasEncryptedData: !!msg.encryptedData,
+              hasEncryptedAesKey: !!msg.encryptedAesKey,
+              timestamp: msg.timestamp
+            });
+            
+            const decryptedText = CryptoManager.decryptMessage(msg, privateKey);
+            
+            console.log('Decryption successful:', decryptedText.substring(0, 50));
           
           // Пытаемся распарсить как JSON (для фото и других типов)
           try {
@@ -269,7 +343,20 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
             text: decryptedText,
             direction: 'incoming'
           };
-        });
+        } catch (decryptError) {
+          console.error('Failed to decrypt message:', decryptError);
+          console.error('Message object:', JSON.stringify(msg, null, 2));
+          console.error('Private key valid:', privateKey && privateKey.includes('-----BEGIN'));
+          
+          // Return message with error indicator
+          return {
+            ...msg,
+            text: '[Ошибка дешифровки: ' + decryptError.message + ']',
+            direction: 'incoming',
+            error: true
+          };
+        }
+      });
         
         setMessages(prev => [...prev, ...decryptedMessages]);
         
@@ -311,8 +398,21 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
     
     setLoading(true);
     try {
+      console.log('🔐 Отправка сообщения:', messageInput.substring(0, 50));
+      console.log('Получатель:', selectedContact.userId);
+      
       // Get recipient's public key
       const keyData = await apiService.getPublicKey(selectedContact.userId);
+      
+      console.log('🔑 Публичный ключ получен:', {
+        hasPublicKey: !!keyData.publicKey,
+        keyStart: keyData.publicKey ? keyData.publicKey.substring(0, 30) : 'N/A',
+        keyFormat: keyData.publicKey?.includes('-----BEGIN') ? 'PEM' : 'UNKNOWN'
+      });
+      
+      if (!keyData.publicKey || !keyData.publicKey.includes('-----BEGIN PUBLIC KEY-----')) {
+        throw new Error('Неверный формат публичного ключа. Ожидается PEM формат.');
+      }
       
       // Encrypt message
       const encryptedPackage = CryptoManager.encryptMessage(
@@ -320,6 +420,12 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
         keyData.publicKey,
         user.userId
       );
+      
+      console.log('✅ Сообщение зашифровано:', {
+        hasEncryptedAesKey: !!encryptedPackage.encryptedAesKey,
+        hasEncryptedData: !!encryptedPackage.encryptedData,
+        timestamp: encryptedPackage.timestamp
+      });
       
       // Upload to cloud
       await cloudClient.uploadMessage(selectedContact.userId, encryptedPackage);
@@ -803,73 +909,203 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
   // CSS стили для тем
   const theme = {
     bg: darkMode 
-      ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
-      : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      ? 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%)'
+      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     sidebar: darkMode
-      ? 'rgba(0, 0, 0, 0.3)'
-      : 'rgba(255, 255, 255, 0.9)',
-    text: darkMode ? '#fff' : '#1a1a2e',
+      ? 'rgba(30, 30, 46, 0.98)'
+      : 'rgba(255, 255, 255, 0.98)',
+    text: darkMode ? '#ffffff' : '#1a1a2e',
     textSecondary: darkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
     messageOutgoing: darkMode ? '#667eea' : '#0084ff',
-    messageIncoming: darkMode ? 'rgba(255, 255, 255, 0.1)' : '#e4e6eb',
-    inputBg: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    border: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    messageIncoming: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.9)',
+    inputBg: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+    border: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    accentGradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
   };
 
   return (
-    <div style={{ 
+    <div className="chat-view-container" style={{ 
       display: 'flex', 
       height: '100vh',
       background: theme.bg,
-      fontFamily: "'Inter', sans-serif",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       overflow: 'hidden',
-      transition: 'all 0.3s ease'
+      position: 'relative'
     }}>
-      {/* Sidebar */}
-      <div style={{ 
-        width: '380px', 
-        display: 'flex',
-        flexDirection: 'column',
-        background: theme.sidebar,
-        backdropFilter: 'blur(20px)',
-        borderRight: `1px solid ${theme.border}`,
-        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.15)'
-      }}>
-        {/* Header с профилем и настройками */}
-        <div style={{ 
-          padding: '1.5rem', 
-          background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-          borderBottom: `1px solid ${theme.border}`
+      {/* Mobile Header */}
+      {isMobile && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          background: theme.primaryGradient,
+          boxShadow: '0 2px 20px rgba(0, 0, 0, 0.3)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 1rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            {/* Logo */}
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.5rem',
+              cursor: 'pointer',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            {showSidebar ? <Icons.Close /> : <Icons.Menu />}
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <img 
               src="/logo.png" 
               alt="Почтовик"
               style={{
-                width: '112px',
-                height: '112px',
+                width: '40px',
+                height: '40px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2))'
+              }}
+            />
+            <h1 style={{
+              margin: 0,
+              fontSize: '1.3rem',
+              fontWeight: '700',
+              color: '#fff',
+              letterSpacing: '-0.02em'
+            }}>Почтовик</h1>
+          </div>
+          
+          <button
+            onClick={onOpenSettings}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.5rem',
+              cursor: 'pointer',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <Icons.Settings />
+          </button>
+        </div>
+      )}
+      
+      {/* Overlay для затемнения фона при закрытом сайдбаре на мобильных */}
+      {isMobile && !showSidebar && selectedContact && (
+        <div 
+          onClick={() => setShowSidebar(true)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 998,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div style={{
+            background: theme.primaryGradient,
+            padding: '1.5rem 2rem',
+            borderRadius: '20px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              color: '#fff',
+              fontSize: '2.5rem',
+              marginBottom: '1rem'
+            }}>
+              <Icons.Menu />
+            </div>
+            <p style={{
+              margin: 0,
+              color: '#fff',
+              fontSize: '1.1rem',
+              fontWeight: '600'
+            }}>Нажмите, чтобы открыть контакты</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Sidebar */}
+      <div className="chat-sidebar" style={{ 
+        width: '100%',
+        maxWidth: isMobile ? (showSidebar ? '100%' : '0') : '380px',
+        display: showSidebar || !isMobile ? 'flex' : 'none',
+        flexDirection: 'column',
+        background: theme.sidebar,
+        backdropFilter: 'blur(20px)',
+        borderRight: isMobile ? 'none' : `1px solid ${theme.border}`,
+        boxShadow: isMobile ? '0 4px 24px rgba(0, 0, 0, 0.3)' : '4px 0 24px rgba(0, 0, 0, 0.15)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'hidden',
+        position: isMobile ? 'fixed' : 'relative',
+        top: isMobile ? '60px' : '0',
+        left: isMobile ? '0' : '0',
+        right: isMobile ? '0' : 'auto',
+        bottom: '0',
+        zIndex: isMobile ? 999 : 'auto'
+      }}>
+        {/* Header с профилем и настройками */}
+        <div className="chat-header" style={{  
+          padding: '1rem', 
+          background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+          borderBottom: `1px solid ${theme.border}`
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {/* Logo */}
+            <img 
+              src="/logo.png" 
+              alt="Почтовик"
+              className="chat-logo"
+              style={{
+                width: '64px',
+                height: '64px',
                 objectFit: 'contain',
                 flexShrink: 0,
                 filter: 'drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3))'
               }}
             />
-            <h3 style={{ 
+            <h3 className="chat-title" style={{ 
               margin: 0,
-              fontSize: '2.8rem',
+              fontSize: '1.8rem',
               fontWeight: '700',
               color: theme.text
             }}>Почтовик</h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {/* Avatar */}
             {userAvatar ? (
               <img 
                 src={userAvatar} 
                 alt="Avatar"
                 style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
                   objectFit: 'cover',
                   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)'
@@ -877,14 +1113,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               />
             ) : (
               <div style={{
-                width: '48px',
-                height: '48px',
+                width: '40px',
+                height: '40px',
                 borderRadius: '50%',
                 background: getAvatarColor(user.userId),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.2rem',
+                fontSize: '1.1rem',
                 fontWeight: '700',
                 color: '#fff',
                 flexShrink: 0,
@@ -893,9 +1129,9 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 {(user.displayName || user.userId).charAt(0).toUpperCase()}
               </div>
             )}
-            <h3 style={{ 
+            <h3 className="user-name" style={{ 
               margin: 0,
-              fontSize: '1.5rem',
+              fontSize: '1.1rem',
               fontWeight: '700',
               color: theme.text
             }}>{user.displayName || user.userId}</h3>
@@ -904,15 +1140,15 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
             onClick={onOpenSettings}
             style={{ 
               width: '100%',
-              marginTop: '1rem',
-              padding: '0.75rem',
+              marginTop: '0.75rem',
+              padding: '0.625rem',
               background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
               border: `1px solid ${theme.border}`,
               color: theme.text,
-              borderRadius: '12px',
+              borderRadius: '10px',
               cursor: 'pointer',
               transition: 'all 0.2s',
-              fontSize: '1rem',
+              fontSize: '0.9rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -925,14 +1161,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
         </div>
 
         {/* Поиск по чатам */}
-        <div style={{ padding: '1rem', borderBottom: `1px solid ${theme.border}` }}>
+        <div style={{ padding: '0.75rem', borderBottom: `1px solid ${theme.border}` }}>
           <div style={{ position: 'relative' }}>
             <span style={{
               position: 'absolute',
-              left: '1rem',
+              left: '0.75rem',
               top: '50%',
               transform: 'translateY(-50%)',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               opacity: 0.5,
               display: 'flex',
               alignItems: 'center',
@@ -941,18 +1177,19 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               <Icons.Search />
             </span>
             <input
+              className="search-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск контактов..."
               style={{
                 width: '100%',
-                padding: '0.875rem 1rem 0.875rem 3rem',
+                padding: '0.75rem 0.875rem 0.75rem 2.75rem',
                 background: theme.inputBg,
                 border: `1px solid ${theme.border}`,
-                borderRadius: '12px',
+                borderRadius: '10px',
                 color: theme.text,
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
                 outline: 'none',
                 transition: 'all 0.2s'
               }}
@@ -967,19 +1204,19 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
         </div>
 
         {/* Контакты */}
-        <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+        <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
           <button 
             onClick={() => setShowAddContact(!showAddContact)}
             style={{ 
               width: '100%',
-              marginBottom: '1rem',
-              padding: '1rem',
-              fontSize: '1rem',
+              marginBottom: '0.75rem',
+              padding: '0.875rem',
+              fontSize: '0.95rem',
               fontWeight: '600',
               background: darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
               border: `1px solid ${theme.border}`,
               color: theme.text,
-              borderRadius: '12px',
+              borderRadius: '10px',
               cursor: 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
@@ -994,10 +1231,10 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
           
           {showAddContact && (
             <div style={{ 
-              marginBottom: '1rem',
-              padding: '1rem',
+              marginBottom: '0.75rem',
+              padding: '0.75rem',
               background: theme.inputBg,
-              borderRadius: '12px',
+              borderRadius: '10px',
               border: `1px solid ${theme.border}`
             }}>
               <input
@@ -1007,18 +1244,18 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 placeholder="User ID"
                 style={{ 
                   width: '100%',
-                  marginBottom: '0.75rem',
-                  padding: '0.875rem',
+                  marginBottom: '0.625rem',
+                  padding: '0.75rem',
                   background: theme.inputBg,
                   border: `1px solid ${theme.border}`,
                   borderRadius: '8px',
                   color: theme.text,
-                  fontSize: '0.95rem'
+                  fontSize: '0.9rem'
                 }}
               />
               <button onClick={addContact} style={{ 
                 width: '100%',
-                padding: '0.875rem',
+                padding: '0.75rem',
                 background: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
                 border: 'none',
                 color: theme.text,
@@ -1045,22 +1282,23 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               
               return (
                 <div
+                  className="contact-item"
                   key={contact.userId}
                   onClick={() => selectContact(contact)}
                   style={{
-                    padding: '0.875rem',
+                    padding: '0.75rem',
                     cursor: 'pointer',
                     background: isSelected 
                       ? (darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)')
                       : (darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'),
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     border: isSelected 
                       ? `2px solid ${darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'}`
                       : '1px solid transparent',
                     transition: 'all 0.2s ease',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.75rem',
+                    gap: '0.625rem',
                     position: 'relative'
                   }}
                   onMouseEnter={(e) => {
@@ -1096,21 +1334,36 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                   </button>
                   
                   {/* Avatar */}
-                  <div style={{
-                    width: '56px',
-                    height: '56px',
+                  <div className="contact-avatar" style={{
+                    width: '48px',
+                    height: '48px',
                     borderRadius: '50%',
                     background: getAvatarColor(contact.userId),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.4rem',
+                    fontSize: '1.2rem',
                     fontWeight: '700',
                     color: '#fff',
                     flexShrink: 0,
-                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)'
+                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',
+                    position: 'relative'
                   }}>
                     {contact.displayName.charAt(0).toUpperCase()}
+                    
+                    {/* Индикатор онлайн-статуса */}
+                    <span style={{
+                      position: 'absolute',
+                      bottom: '2px',
+                      right: '2px',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: onlineUsers[contact.userId] ? '#4ade80' : '#9ca3af',
+                      border: '2px solid ' + theme.sidebar,
+                      boxShadow: onlineUsers[contact.userId] ? '0 0 8px rgba(74, 222, 128, 0.6)' : 'none',
+                      transition: 'all 0.3s ease'
+                    }} title={onlineUsers[contact.userId] ? 'Онлайн' : 'Офлайн'} />
                   </div>
                   
                   {/* Contact Info */}
@@ -1119,11 +1372,11 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       display: 'flex', 
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '0.375rem'
+                      marginBottom: '0.25rem'
                     }}>
-                      <span style={{ 
+                      <span className="contact-name" style={{ 
                         fontWeight: '600',
-                        fontSize: '1rem',
+                        fontSize: '0.95rem',
                         color: theme.text,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -1133,7 +1386,7 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       </span>
                       {lastMsg && (
                         <span style={{ 
-                          fontSize: '0.75rem',
+                          fontSize: '0.7rem',
                           color: theme.textSecondary,
                           flexShrink: 0,
                           marginLeft: '0.5rem'
@@ -1149,7 +1402,7 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       alignItems: 'center'
                     }}>
                       <span style={{ 
-                        fontSize: '0.85rem',
+                        fontSize: '0.8rem',
                         color: lastMsg ? theme.textSecondary : 'rgba(128, 128, 128, 0.6)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -1158,14 +1411,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                         {lastMsg ? lastMsg.text : 'Нет сообщений'}
                       </span>
                       {unreadCount > 0 && (
-                        <span style={{
+                        <span className="unread-badge" style={{
                           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                           color: '#fff',
-                          fontSize: '0.7rem',
+                          fontSize: '0.65rem',
                           fontWeight: '700',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '12px',
-                          minWidth: '22px',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '10px',
+                          minWidth: '20px',
                           textAlign: 'center',
                           boxShadow: '0 2px 8px rgba(79, 172, 254, 0.4)'
                         }}>
@@ -1182,28 +1435,75 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
       </div>
 
       {/* Область чата */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="chat-area" style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        position: 'relative',
+        marginLeft: isMobile ? '0' : (showSidebar ? '0' : '380px'),
+        transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        width: '100%'
+      }}>
+        {/* Кнопка гамбургер для десктопа */}
+        {!isMobile && (
+          <button
+            className="hamburger-button"
+            onClick={() => setShowSidebar(!showSidebar)}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 100,
+              background: theme.sidebar,
+              backdropFilter: 'blur(20px)',
+              border: `2px solid ${theme.border}`,
+              borderRadius: '12px',
+              padding: '0.625rem',
+              cursor: 'pointer',
+              color: theme.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'scale(1.05)';
+              e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'scale(1)';
+              e.target.style.background = theme.sidebar;
+            }}
+            title={showSidebar ? 'Закрыть меню' : 'Открыть меню'}
+          >
+            {showSidebar ? <Icons.Close /> : <Icons.Menu />}
+          </button>
+        )}
+        
         {selectedContact ? (
           <>
             {/* Заголовок чата */}
-            <div style={{ 
-              padding: '1.25rem 2rem', 
+            <div className="chat-header" style={{ 
+              padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
+              paddingLeft: !isMobile && showSidebar ? '5rem' : '1rem',
               borderBottom: `1px solid ${theme.border}`,
               background: theme.sidebar,
               backdropFilter: 'blur(20px)',
               display: 'flex',
               alignItems: 'center',
-              gap: '1rem'
+              gap: '0.75rem',
+              paddingTop: isMobile ? 'calc(0.75rem + env(safe-area-inset-top))' : '1rem'
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
+                width: '42px',
+                height: '42px',
                 borderRadius: '50%',
                 background: getAvatarColor(selectedContact.userId),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.3rem',
+                fontSize: '1.2rem',
                 fontWeight: '700',
                 color: '#fff',
                 boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)'
@@ -1211,16 +1511,16 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 {selectedContact.displayName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h3 style={{
+                <h3 className="chat-header-title" style={{
                   margin: 0,
-                  fontSize: '1.4rem',
+                  fontSize: '1.2rem',
                   fontWeight: '700',
                   color: theme.text
                 }}>{selectedContact.displayName}</h3>
                 <div style={{ 
-                  fontSize: '0.85rem', 
+                  fontSize: '0.8rem', 
                   color: theme.textSecondary,
-                  marginTop: '0.125rem'
+                  marginTop: '0.1rem'
                 }}>
                   @{selectedContact.userId}
                 </div>
@@ -1231,10 +1531,10 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
             <div className="chat-scroll" style={{ 
               flex: 1, 
               overflowY: 'auto', 
-              padding: '1.5rem 2rem',
+              padding: '1rem 1.25rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem',
+              gap: '0.625rem',
               background: darkMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.5)'
             }}>
               {groupMessagesByDate().map((item) => {
@@ -1245,14 +1545,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       style={{
                         display: 'flex',
                         justifyContent: 'center',
-                        margin: '1.5rem 0 1rem 0'
+                        margin: '1rem 0 0.75rem 0'
                       }}>
                       <span style={{
                         background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                         color: theme.textSecondary,
-                        padding: '0.5rem 1.25rem',
-                        borderRadius: '20px',
-                        fontSize: '0.85rem',
+                        padding: '0.375rem 1rem',
+                        borderRadius: '16px',
+                        fontSize: '0.8rem',
                         fontWeight: '600'
                       }}>
                         {item.label}
@@ -1267,6 +1567,7 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 return (
                   <div
                     key={item.id}
+                    className="message-bubble-wrapper"
                     style={{
                       display: 'flex',
                       justifyContent: msg.direction === 'outgoing' ? 'flex-end' : 'flex-start',
@@ -1275,9 +1576,9 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                   >
                     <div
                       style={{
-                        maxWidth: msg.type === 'photo' ? '70%' : msg.type === 'voice' ? '65%' : '60%',
-                        padding: msg.type === 'photo' ? '0.5rem' : '0.875rem 1.125rem',
-                        borderRadius: '18px',
+                        maxWidth: msg.type === 'photo' ? '80%' : msg.type === 'voice' ? '75%' : '70%',
+                        padding: msg.type === 'photo' ? '0.375rem' : '0.75rem 1rem',
+                        borderRadius: '16px',
                         background: msg.direction === 'outgoing' 
                           ? theme.messageOutgoing
                           : theme.messageIncoming,
@@ -1294,14 +1595,14 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       }}
                     >
                       {msg.type === 'photo' ? (
-                        <div>
+                        <div className="message-photo">
                           <img 
                             src={msg.photoData} 
                             alt="Photo" 
                             style={{
                               maxWidth: '100%',
-                              maxHeight: '400px',
-                              borderRadius: '12px',
+                              maxHeight: '300px',
+                              borderRadius: '10px',
                               display: 'block',
                               cursor: 'pointer'
                             }}
@@ -1321,8 +1622,8 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                             }}
                           />
                           <div style={{
-                            padding: '0.5rem 0.75rem 0.25rem',
-                            fontSize: '0.85rem',
+                            padding: '0.375rem 0.625rem 0.25rem',
+                            fontSize: '0.8rem',
                             opacity: 0.8,
                             display: 'flex',
                             alignItems: 'center',
@@ -1420,19 +1721,19 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                           />
                         </div>
                       ) : (
-                        <div style={{ 
+                        <div className="message-text" style={{ 
                           whiteSpace: 'pre-wrap',
-                          fontSize: '0.95rem',
-                          lineHeight: '1.5'
+                          fontSize: '0.9rem',
+                          lineHeight: '1.4'
                         }}>{msg.text}</div>
                       )}
                       <div style={{ 
                         display: 'flex',
                         justifyContent: 'flex-end',
                         alignItems: 'center',
-                        gap: '0.375rem',
-                        marginTop: msg.type === 'photo' ? '0.5rem' : '0.375rem',
-                        fontSize: '0.75rem',
+                        gap: '0.25rem',
+                        marginTop: msg.type === 'photo' ? '0.375rem' : '0.25rem',
+                        fontSize: '0.7rem',
                         opacity: 0.7
                       }}>
                         <span>{formatMessageTime(msg.timestamp)}</span>
@@ -1454,8 +1755,8 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
             </div>
 
             {/* Панель ввода сообщений */}
-            <div style={{ 
-              padding: '1.25rem 2rem', 
+            <div className="message-input-area" style={{ 
+              padding: '1rem 1.25rem', 
               borderTop: `1px solid ${theme.border}`,
               background: theme.sidebar,
               backdropFilter: 'blur(20px)'
@@ -1463,41 +1764,41 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               {/* Предпросмотр фото */}
               {photoPreview && (
                 <div style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
+                  marginBottom: '0.75rem',
+                  padding: '0.75rem',
                   background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  borderRadius: '16px',
+                  borderRadius: '14px',
                   border: `2px solid ${theme.border}`
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'flex-end',
-                    gap: '1rem'
+                    gap: '0.75rem'
                   }}>
                     <img 
                       src={photoPreview} 
                       alt="Preview" 
                       style={{
-                        maxWidth: '200px',
-                        maxHeight: '200px',
-                        borderRadius: '12px',
+                        maxWidth: '150px',
+                        maxHeight: '150px',
+                        borderRadius: '10px',
                         objectFit: 'cover',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                       }}
                     />
                     <div style={{ flex: 1 }}>
                       <div style={{
-                        fontSize: '0.9rem',
+                        fontSize: '0.85rem',
                         color: theme.text,
-                        marginBottom: '0.5rem',
+                        marginBottom: '0.375rem',
                         fontWeight: '600'
                       }}>
                         📷 {selectedPhotoFile?.name || 'Фото'}
                       </div>
                       <div style={{
-                        fontSize: '0.8rem',
+                        fontSize: '0.75rem',
                         color: theme.textSecondary,
-                        marginBottom: '1rem'
+                        marginBottom: '0.75rem'
                       }}>
                         {selectedPhotoFile?.size ? Math.round(selectedPhotoFile.size / 1024) + ' KB' : ''}
                       </div>
@@ -1506,18 +1807,18 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                           onClick={sendPhoto}
                           disabled={sendingPhoto}
                           style={{
-                            padding: '0.625rem 1.25rem',
+                            padding: '0.5rem 1rem',
                             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             border: 'none',
-                            borderRadius: '12px',
+                            borderRadius: '10px',
                             color: '#fff',
                             fontWeight: '600',
                             cursor: sendingPhoto ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s',
-                            fontSize: '0.9rem',
+                            fontSize: '0.85rem',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem'
+                            gap: '0.375rem'
                           }}
                         >
                           {sendingPhoto ? (
@@ -1535,15 +1836,15 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                         <button
                           onClick={cancelPhotoSend}
                           style={{
-                            padding: '0.625rem 1.25rem',
+                            padding: '0.5rem 1rem',
                             background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                             border: `1px solid ${theme.border}`,
-                            borderRadius: '12px',
+                            borderRadius: '10px',
                             color: theme.text,
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            fontSize: '0.9rem'
+                            fontSize: '0.85rem'
                           }}
                         >
                           Отмена
@@ -1556,12 +1857,12 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               {/* Emoji picker */}
               {showEmojiPicker && (
                 <div style={{
-                  marginBottom: '0.75rem',
-                  padding: '0.75rem',
+                  marginBottom: '0.625rem',
+                  padding: '0.625rem',
                   background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   display: 'flex',
-                  gap: '0.5rem',
+                  gap: '0.375rem',
                   flexWrap: 'wrap'
                 }}>
                   {commonEmoji.map(emoji => (
@@ -1572,10 +1873,10 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '1.5rem',
+                        fontSize: '1.3rem',
                         padding: '0.25rem',
                         transition: 'all 0.2s',
-                        borderRadius: '8px'
+                        borderRadius: '6px'
                       }}
                       onMouseEnter={(e) => {
                         e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
@@ -1594,27 +1895,28 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
               
               <div style={{ 
                 display: 'flex', 
-                gap: '0.75rem', 
+                gap: '0.625rem', 
                 alignItems: 'flex-end',
                 padding: '0.25rem'
               }}>
                 {/* Кнопки слева */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.375rem' }}>
                   <button 
+                    className="action-button"
                     onClick={selectPhoto}
                     style={{
-                      padding: '0.875rem',
+                      padding: '0.75rem',
                       background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
                       border: `2px solid ${theme.border}`,
                       cursor: 'pointer',
-                      borderRadius: '16px',
+                      borderRadius: '14px',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       color: theme.text,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '48px',
-                      height: '48px',
+                      width: '44px',
+                      height: '44px',
                       flexShrink: 0
                     }}
                     title="Отправить фото"
@@ -1634,20 +1936,21 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                     </svg>
                   </button>
                   <button 
+                    className="action-button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     style={{
-                      padding: '0.875rem',
+                      padding: '0.75rem',
                       background: showEmojiPicker ? (darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)') : 'none',
                       border: `2px solid ${theme.border}`,
                       cursor: 'pointer',
-                      borderRadius: '16px',
+                      borderRadius: '14px',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       color: theme.text,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '48px',
-                      height: '48px',
+                      width: '44px',
+                      height: '44px',
                       flexShrink: 0
                     }}
                     title="Эмодзи"
@@ -1663,20 +1966,21 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                     <Icons.Emoji />
                   </button>
                   <button 
+                    className="action-button"
                     onClick={toggleRecording}
                     style={{
-                      padding: '0.875rem',
+                      padding: '0.75rem',
                       background: isRecording ? 'rgba(245, 87, 108, 0.9)' : 'none',
                       border: `2px solid ${isRecording ? 'rgba(245, 87, 108, 0.5)' : theme.border}`,
                       cursor: 'pointer',
-                      borderRadius: '16px',
+                      borderRadius: '14px',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       color: theme.text,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '48px',
-                      height: '48px',
+                      width: '44px',
+                      height: '44px',
                       flexShrink: 0,
                       animation: isRecording ? 'pulse 1s infinite' : 'none',
                       position: 'relative',
@@ -1746,6 +2050,7 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 }}>
                   <textarea
                     ref={textareaRef}
+                    className="message-input"
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1759,18 +2064,18 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                     rows={textareaRows}
                     style={{ 
                       width: '100%',
-                      padding: '1rem 1.25rem',
-                      paddingRight: '3rem',
-                      fontSize: '0.95rem',
+                      padding: '0.875rem 1rem',
+                      paddingRight: '2.75rem',
+                      fontSize: '0.9rem',
                       background: theme.inputBg,
                       border: `2px solid ${theme.border}`,
-                      borderRadius: '28px',
+                      borderRadius: '24px',
                       color: theme.text,
                       outline: 'none',
                       resize: 'none',
                       fontFamily: "'Inter', sans-serif",
-                      minHeight: '48px',
-                      maxHeight: '140px',
+                      minHeight: '44px',
+                      maxHeight: '120px',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       boxShadow: darkMode 
                         ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
@@ -1797,12 +2102,13 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                 
                 {/* Кнопка отправки */}
                 <button 
+                  className="send-button"
                   onClick={sendMessage}
                   disabled={loading || !messageInput.trim()}
                   style={{
-                    padding: '1rem 1.75rem',
-                    minWidth: '56px',
-                    height: '56px',
+                    padding: '0.875rem 1.5rem',
+                    minWidth: '52px',
+                    height: '52px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1812,10 +2118,10 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
                       : (darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'),
                     border: 'none',
                     color: messageInput.trim() && !loading ? '#fff' : theme.textSecondary,
-                    borderRadius: '28px',
+                    borderRadius: '24px',
                     cursor: messageInput.trim() && !loading ? 'pointer' : 'not-allowed',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    fontSize: '1.3rem',
+                    fontSize: '1.2rem',
                     boxShadow: messageInput.trim() && !loading 
                       ? '0 4px 16px rgba(102, 126, 234, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.1)' 
                       : 'none',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/modern-ui.css';
 
 // SVG Icons
 const Icons = {
@@ -54,7 +55,7 @@ const Icons = {
   )
 };
 
-function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload }) {
+function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiService, onOpenDevices }) {
   const [displayName, setDisplayName] = useState(user.displayName || '');
   const [nameServerUrl, setNameServerUrl] = useState(() => {
     try {
@@ -243,6 +244,44 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload }) {
               color: theme.text
             }}>Настройки</h2>
           </div>
+
+          {/* Devices Management Button */}
+          {onOpenDevices && (
+            <button
+              onClick={onOpenDevices}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                marginBottom: '2rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+              Управление устройствами
+            </button>
+          )}
 
           {/* Account Information */}
           <div style={{ marginBottom: '2rem' }}>
