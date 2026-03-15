@@ -175,6 +175,31 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
   // State для WebSocket и онлайн-статусов
   const [realtimeClient, setRealtimeClient] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState({});
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting, connected, disconnected
+  
+  // Кэш публичных ключей для оптимизации
+  const [publicKeyCache, setPublicKeyCache] = useState({});
+  
+  // Получение публичного ключа с кэшированием
+  const getPublicKeyCached = async (userId) => {
+    // Проверяем кэш
+    if (publicKeyCache[userId]) {
+      console.log('🔑 Public key from cache:', userId);
+      return publicKeyCache[userId];
+    }
+    
+    // Загружаем с сервера
+    console.log('🔑 Loading public key from server:', userId);
+    const keyData = await apiService.getPublicKey(userId);
+    
+    if (!keyData.publicKey || !keyData.publicKey.includes('-----BEGIN PUBLIC KEY-----')) {
+      throw new Error('Неверный формат публичного ключа. Ожидается PEM формат.');
+    }
+    
+    // Сохраняем в кэш
+    setPublicKeyCache(prev => ({ ...prev, [userId]: keyData.publicKey }));
+    return keyData.publicKey;
+  };
   
   // Handle avatar upload
   const handleAvatarUpload = async (file) => {
@@ -401,23 +426,19 @@ function ChatView({ user, privateKey, apiService, cloudClient, onLogout, onOpenS
       console.log('🔐 Отправка сообщения:', messageInput.substring(0, 50));
       console.log('Получатель:', selectedContact.userId);
       
-      // Get recipient's public key
-      const keyData = await apiService.getPublicKey(selectedContact.userId);
+      // Get recipient's public key with caching
+      const publicKey = await getPublicKeyCached(selectedContact.userId);
       
       console.log('🔑 Публичный ключ получен:', {
-        hasPublicKey: !!keyData.publicKey,
-        keyStart: keyData.publicKey ? keyData.publicKey.substring(0, 30) : 'N/A',
-        keyFormat: keyData.publicKey?.includes('-----BEGIN') ? 'PEM' : 'UNKNOWN'
+        hasPublicKey: !!publicKey,
+        keyStart: publicKey ? publicKey.substring(0, 30) : 'N/A',
+        keyFormat: publicKey?.includes('-----BEGIN') ? 'PEM' : 'UNKNOWN'
       });
-      
-      if (!keyData.publicKey || !keyData.publicKey.includes('-----BEGIN PUBLIC KEY-----')) {
-        throw new Error('Неверный формат публичного ключа. Ожидается PEM формат.');
-      }
       
       // Encrypt message
       const encryptedPackage = CryptoManager.encryptMessage(
         messageInput,
-        keyData.publicKey,
+        publicKey,
         user.userId
       );
       

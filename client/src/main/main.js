@@ -144,7 +144,7 @@ ipcMain.handle('config-import', async () => {
     const newConfig = {
       userId: configData.userId,
       displayName: configData.displayName || currentConfig.displayName,
-      nameServerUrl: configData.nameServerUrl || currentConfig.nameServerUrl || 'http://localhost:3001',
+      nameServerUrl: configData.nameServerUrl || currentConfig.nameServerUrl || 'https://pochtovik-name-server.onrender.com',
       bucket: configData.bucket || currentConfig.bucket,
       accessKeyId: configData.accessKeyId || currentConfig.accessKeyId,
       secretAccessKey: configData.secretAccessKey || currentConfig.secretAccessKey,

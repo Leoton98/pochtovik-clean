@@ -57,6 +57,12 @@ function App() {
     try {
       // Use production server on Render by default
       const nameServerUrl = 'https://pochtovik-name-server.onrender.com';
+      
+      // Проверка протокола (только HTTPS для production)
+      if (nameServerUrl.startsWith('http://') && !window.location.hostname.includes('localhost')) {
+        console.warn('⚠️ WARNING: Using HTTP in production! Switch to HTTPS.');
+      }
+      
       const api = new ApiService(nameServerUrl);
       console.log('🌐 Connecting to:', nameServerUrl);
       const loginResult = await api.login(userId, password);
@@ -210,6 +216,14 @@ function App() {
 
   const handleRegister = async (userId, password, displayName) => {
     try {
+      // Валидация сложности пароля
+      if (password.length < 6) {
+        throw new Error('Пароль должен быть не менее 6 символов');
+      }
+      if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        throw new Error('Пароль должен содержать хотя бы одну букву и одну цифру');
+      }
+      
       // Generate RSA key pair
       const keyPair = CryptoManager.generateRSAKeyPair(2048);
       
@@ -244,7 +258,7 @@ function App() {
       const userConfig = {
         userId,
         displayName,
-        nameServerUrl: 'http://localhost:3001',
+        nameServerUrl: 'https://pochtovik-name-server.onrender.com',
         bucket: DEFAULT_CONFIG.bucket,
         accessKeyId: DEFAULT_CONFIG.accessKeyId,
         secretAccessKey: DEFAULT_CONFIG.secretAccessKey,

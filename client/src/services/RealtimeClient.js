@@ -19,7 +19,7 @@ class RealtimeClient {
   }
 
   // Подключение к WebSocket серверу
-  async connect(userId) {
+  async connect(userId, onStatusChange) {
     return new Promise((resolve, reject) => {
       try {
         this.userId = userId;
@@ -29,6 +29,7 @@ class RealtimeClient {
           console.log('✅ WebSocket connected');
           this.isConnected = true;
           this.reconnectAttempts = 0;
+          if (onStatusChange) onStatusChange('connected');
 
           // Авторизация
           this.ws.send(JSON.stringify({
@@ -51,30 +52,34 @@ class RealtimeClient {
 
         this.ws.onerror = (error) => {
           console.error('❌ WebSocket error:', error);
+          if (onStatusChange) onStatusChange('disconnected');
           reject(error);
         };
 
         this.ws.onclose = () => {
           console.log('🔴 WebSocket disconnected');
           this.isConnected = false;
+          if (onStatusChange) onStatusChange('disconnected');
           
           // Попытка переподключения
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
             const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
             console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
-            setTimeout(() => this.connect(userId), delay);
+            setTimeout(() => this.connect(userId, onStatusChange), delay);
           } else {
             console.error('❌ Max reconnect attempts reached');
+            // Уведомляем UI что соединение потеряно навсегда
+            if (onStatusChange) onStatusChange('failed');
           }
         };
 
-        // Heartbeat для поддержания соединения
+        // Heartbeat для поддержания соединения (оптимизировано до 60 секунд)
         this.heartbeatInterval = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'ping' }));
           }
-        }, 30000);
+        }, 60000);
 
       } catch (error) {
         reject(error);

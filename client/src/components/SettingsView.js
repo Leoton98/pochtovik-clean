@@ -59,9 +59,9 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
   const [displayName, setDisplayName] = useState(user.displayName || '');
   const [nameServerUrl, setNameServerUrl] = useState(() => {
     try {
-      return localStorage.getItem('nameServerUrl') || user.nameServerUrl || 'http://localhost:3001';
+      return localStorage.getItem('nameServerUrl') || user.nameServerUrl || 'https://pochtovik-name-server.onrender.com';
     } catch (e) {
-      return 'http://localhost:3001';
+      return 'https://pochtovik-name-server.onrender.com';
     }
   });
   const [darkMode, setDarkMode] = useState(() => {
@@ -470,7 +470,7 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
                   type="text"
                   value={nameServerUrl}
                   onChange={(e) => setNameServerUrl(e.target.value)}
-                  placeholder="http://localhost:3001"
+                  placeholder="https://pochtovik-name-server.onrender.com"
                   style={{ 
                     flex: 1,
                     padding: '0.75rem',
