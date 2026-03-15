@@ -213,8 +213,8 @@ function App() {
       // Generate RSA key pair
       const keyPair = CryptoManager.generateRSAKeyPair(2048);
       
-      // Register on name server with password
-      const api = new ApiService('http://localhost:3001');
+      // Register on name server with password (use production server)
+      const api = new ApiService('https://pochtovik-name-server.onrender.com');
       await api.registerUser(userId, password, keyPair.publicKey, displayName);
 
       // Generate device ID

@@ -147,8 +147,37 @@ wss.on('connection', (ws, req) => {
         broadcastPresence(userId, true);
       }
       
+      if (message.type === 'message') {
+        // Пересылка сообщения получателю
+        const { from, to, data } = message;
+        console.log(`📨 Message from ${from} to ${to}`);
+        
+        const sent = sendToUser(to, {
+          type: 'message',
+          from: from,
+          data: data,
+          timestamp: message.timestamp || Date.now()
+        });
+        
+        // Если получатель офлайн, отправляем push уведомление
+        if (!sent) {
+          await sendOfflinePushNotification(to, from, data);
+        }
+      }
+      
       if (message.type === 'ping') {
         ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+      }
+      
+      if (message.type === 'typing') {
+        // Пересылка статуса "печатает"
+        const { from, to, isTyping } = message;
+        sendToUser(to, {
+          type: 'typing',
+          from: from,
+          isTyping: isTyping,
+          timestamp: message.timestamp || Date.now()
+        });
       }
       
     } catch (error) {
@@ -624,6 +653,42 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
   } catch (error) {
     console.error('❌ Error sending push notification:', error);
     return false;
+  }
+}
+
+// Отправка push уведомления офлайн пользователю при получении сообщения
+async function sendOfflinePushNotification(recipientId, senderId, messageData) {
+  try {
+    await db.read();
+    
+    // Получаем устройства получателя
+    const devices = db.data.devices[recipientId] || [];
+    
+    // Ищем устройства с FCM токенами
+    for (const device of devices) {
+      if (device.fcmToken && device.pushEnabled) {
+        // Получаем имя отправителя
+        const sender = db.data.users[senderId];
+        const senderName = sender ? sender.displayName : senderId;
+        
+        // Отправляем push
+        await sendPushNotification(
+          device.fcmToken,
+          `Новое сообщение от ${senderName}`,
+          'Нажмите чтобы открыть',
+          {
+            type: 'message',
+            from: senderId,
+            timestamp: Date.now().toString()
+          }
+        );
+        
+        // Отправляем только на одно активное устройство
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error sending offline push:', error);
   }
 }
 
