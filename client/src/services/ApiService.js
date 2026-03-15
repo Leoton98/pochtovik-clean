@@ -148,6 +148,22 @@ class ApiService {
   }
 
   /**
+   * Register FCM token for push notifications
+   */
+  async registerFcmToken(userId, deviceId, fcmToken) {
+    try {
+      const response = await this.api.post('/push/register', {
+        userId,
+        deviceId,
+        fcmToken
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Handle errors
    */
   handleError(error) {

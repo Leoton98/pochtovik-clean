@@ -61,18 +61,29 @@ db.read().then(() => {
   // Initialize Firebase Admin if available
   if (admin) {
     try {
-      // Check if service account key exists
-      const fs = require('fs');
-      const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
+      // Try to load from environment variable first (for Render)
+      const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
       
-      if (fs.existsSync(serviceAccountPath)) {
-        const serviceAccount = require('./firebase-service-account.json');
+      if (serviceAccountEnv) {
+        const serviceAccount = JSON.parse(serviceAccountEnv);
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount)
         });
         console.log('✅ Firebase Admin initialized - Push notifications enabled');
       } else {
-        console.log('⚠️ Firebase service account not found. Create firebase-service-account.json for push notifications');
+        // Fallback to file (for local development)
+        const fs = require('fs');
+        const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
+        
+        if (fs.existsSync(serviceAccountPath)) {
+          const serviceAccount = require('./firebase-service-account.json');
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+          console.log('✅ Firebase Admin initialized - Push notifications enabled');
+        } else {
+          console.log('⚠️ Firebase service account not found. Add FIREBASE_SERVICE_ACCOUNT env var or create firebase-service-account.json');
+        }
       }
     } catch (error) {
       console.log('⚠️ Firebase Admin initialization error:', error.message);

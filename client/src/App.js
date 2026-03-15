@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CryptoManager from './crypto/CryptoManager';
 import YandexCloudClient from './cloud/YandexCloudClient';
 import ApiService from './services/ApiService';
+import pushService from './services/PushService';
 import LoginView from './components/LoginView';
 import ChatView from './components/ChatView';
 import SettingsView from './components/SettingsView';
@@ -54,8 +55,10 @@ function App() {
 
   const handleLogin = async (userId, password) => {
     try {
-      // Login to name server
-      const api = new ApiService('http://localhost:3001');
+      // Use production server on Render by default
+      const nameServerUrl = 'https://pochtovik-name-server.onrender.com';
+      const api = new ApiService(nameServerUrl);
+      console.log('🌐 Connecting to:', nameServerUrl);
       const loginResult = await api.login(userId, password);
       
       // Get or generate private key
@@ -106,6 +109,9 @@ function App() {
         
         await api.registerDevice(userId, deviceId, deviceInfo);
         console.log('📱 Device registered:', deviceId);
+        
+        // Initialize push notifications after device registration
+        await initializePushNotifications(userId, deviceId, api);
       } catch (deviceError) {
         console.error('Warning: Could not register device:', deviceError);
         // Continue anyway - device registration is not critical
@@ -115,7 +121,7 @@ function App() {
       const userConfig = {
         userId,
         displayName: loginResult.displayName,
-        nameServerUrl: 'http://localhost:3001',
+        nameServerUrl: 'https://pochtovik-name-server.onrender.com',
         bucket: DEFAULT_CONFIG.bucket,
         accessKeyId: DEFAULT_CONFIG.accessKeyId,
         secretAccessKey: DEFAULT_CONFIG.secretAccessKey,
@@ -145,6 +151,60 @@ function App() {
       setView('login');
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const initializePushNotifications = async (userId, deviceId, api) => {
+    try {
+      // Create Firebase config from environment variables
+      const firebaseConfig = {
+        apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+        authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.REACT_APP_FIREBASE_APP_ID
+      };
+
+      // Check if all variables are configured
+      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        console.warn('⚠️ Firebase config not complete, skipping push initialization');
+        return;
+      }
+
+      // Initialize push service
+      const initialized = await pushService.initialize(firebaseConfig);
+      
+      if (!initialized) {
+        console.warn('⚠️ Push service initialization failed');
+        return;
+      }
+
+      // Request permission and get token
+      const token = await pushService.requestPermissionAndGetToken();
+      
+      if (token) {
+        console.log('📱 FCM Token obtained:', token.substring(0, 30) + '...');
+        
+        // Register token on server
+        try {
+          await api.registerFcmToken(userId, deviceId, token);
+          console.log('✅ FCM token registered on server');
+        } catch (error) {
+          console.error('❌ Failed to register FCM token:', error.message);
+        }
+      } else {
+        console.log('ℹ️ Notification permission denied or token not received');
+      }
+
+      // Listen for messages when app is in foreground
+      pushService.onMessageReceived((payload) => {
+        console.log('📨 New message received:', payload);
+        // You can update UI or show notification here
+      });
+
+    } catch (error) {
+      console.error('❌ Error initializing push notifications:', error);
     }
   };
 

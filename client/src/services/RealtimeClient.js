@@ -1,6 +1,15 @@
 class RealtimeClient {
   constructor(serverUrl) {
-    this.serverUrl = serverUrl.replace('http', 'ws');
+    // Convert HTTP(S) URL to WebSocket URL
+    // For production (Render): https:// -> wss://
+    // For local: http:// -> ws://
+    if (serverUrl.startsWith('https://')) {
+      this.serverUrl = 'wss://' + serverUrl.replace('https://', '');
+    } else if (serverUrl.startsWith('http://')) {
+      this.serverUrl = 'ws://' + serverUrl.replace('http://', '');
+    } else {
+      this.serverUrl = serverUrl;
+    }
     this.ws = null;
     this.userId = null;
     this.reconnectAttempts = 0;

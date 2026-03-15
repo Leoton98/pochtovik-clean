@@ -9,6 +9,16 @@
       "devices": [
         "device-desktop-002"
       ]
+    },
+    "Popik": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkHxzlambOyrzN6siMoEV\r\nVzCliU0YnUqPbHW0g4bP3DBqO2oMpglajbZ6Ij7KX2ph5HfVmhOYNnU7RC1wrhtt\r\nwhM8NcGaAvLETDokORLD4ywWO2Xctn9u2yNLEZofyulOEJ2SlxRKLlGlADHZ4kSU\r\nvVAouw27KSGJMdSU4/qFc6C4eXP3Q4ElJkfdX71l23Id/1oSpVUKUJZrHOkl2EhZ\r\nSP1o9GNBQKvaTcZ8DMEoVBz8yrrJbA2c9tTt4c/XmOQtN8n+SM5JKO1DXd7/Oy5A\r\n8gTcHp50s67ht6e/x+l2LEvJPmqNECunE/u729NtpHqK7tLUc2bFKA2fSbEYvjju\r\newIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+      "displayName": "popa",
+      "passwordHash": "$2a$10$bZBdpIL5QTzZTsUg5ZKplOkPgCNM2CWiHplIcrZ/40.eZVBeJgVGe",
+      "registeredAt": 1773579558892,
+      "lastSeen": 1773579558892,
+      "devices": [
+        "device-1773579558905-mmn8x7l"
+      ]
     }
   },
   "sessions": {},
@@ -21,6 +31,17 @@
         "platform": "web",
         "registeredAt": 1773572285328,
         "lastSeen": 1773572285328,
+        "isActive": true
+      }
+    ],
+    "Popik": [
+      {
+        "deviceId": "device-1773579558905-mmn8x7l",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkHxzlambOyrzN6siMoEV\r\nVzCliU0YnUqPbHW0g4bP3DBqO2oMpglajbZ6Ij7KX2ph5HfVmhOYNnU7RC1wrhtt\r\nwhM8NcGaAvLETDokORLD4ywWO2Xctn9u2yNLEZofyulOEJ2SlxRKLlGlADHZ4kSU\r\nvVAouw27KSGJMdSU4/qFc6C4eXP3Q4ElJkfdX71l23Id/1oSpVUKUJZrHOkl2EhZ\r\nSP1o9GNBQKvaTcZ8DMEoVBz8yrrJbA2c9tTt4c/XmOQtN8n+SM5JKO1DXd7/Oy5A\r\n8gTcHp50s67ht6e/x+l2LEvJPmqNECunE/u729NtpHqK7tLUc2bFKA2fSbEYvjju\r\newIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+        "deviceName": "Desktop",
+        "platform": "web",
+        "registeredAt": 1773579558910,
+        "lastSeen": 1773579558910,
         "isActive": true
       }
     ]
