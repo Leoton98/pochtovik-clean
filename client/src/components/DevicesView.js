@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './DevicesView.comfortable.css';
 
 // SVG Icons
 const Icons = {
@@ -65,6 +66,16 @@ function DevicesView({ apiService, userId, onBack }) {
   const [error, setError] = useState(null);
   const [deletingDevice, setDeletingDevice] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Чтение настройки темы из localStorage
+  const darkMode = (() => {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      return savedTheme ? JSON.parse(savedTheme) : true;
+    } catch (e) {
+      return true;
+    }
+  })();
 
   // Загрузка списка устройств
   const loadDevices = async () => {
@@ -132,84 +143,44 @@ function DevicesView({ apiService, userId, onBack }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '1rem'
-    }}>
-      <div style={{
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
+    <div className={`devices-container ${darkMode ? '' : 'light-theme'}`}>
+      <div className="devices-content">
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '2rem',
-          color: 'white'
-        }}>
+        <div className="devices-header">
           <button
+            className="btn-back-devices"
             onClick={onBack}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              cursor: 'pointer',
-              marginRight: '1rem',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
-            onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
           >
             <Icons.ArrowLeft />
           </button>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', margin: 0 }}>
+          <div className="devices-title-wrapper">
+            <h1 className="devices-title">
               Мои устройства
             </h1>
-            <p style={{ fontSize: '14px', opacity: 0.9, margin: '0.5rem 0 0 0' }}>
+            <p className="devices-subtitle">
               Управление доверенными устройствами
             </p>
           </div>
           <button
+            className="btn-refresh"
             onClick={loadDevices}
             disabled={refreshing}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              cursor: refreshing ? 'not-allowed' : 'pointer',
-              color: 'white',
-              transition: 'all 0.2s',
-              opacity: refreshing ? 0.5 : 1
-            }}
           >
             <Icons.RefreshCw />
           </button>
         </div>
 
         {/* Info Card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          marginBottom: '1.5rem',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-            <div style={{ 
-              color: '#667eea',
-              flexShrink: 0
-            }}>
+        <div className="info-card">
+          <div className="info-card-wrapper">
+            <div className="info-icon">
               <Icons.Shield />
             </div>
             <div>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '16px', color: '#1f2937' }}>
+              <h3 className="info-title">
                 Безопасность устройств
               </h3>
-              <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', lineHeight: 1.6 }}>
+              <p className="info-description">
                 Каждое устройство имеет свой уникальный ключ шифрования. 
                 Вы можете удалить любое устройство - оно потеряет доступ к переписке, 
                 но остальные устройства продолжат работу.
@@ -219,53 +190,27 @@ function DevicesView({ apiService, userId, onBack }) {
         </div>
 
         {/* Devices List */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginBottom: '1.5rem'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#1f2937' }}>
+        <div className="devices-list-card">
+          <div className="devices-list-header">
+            <h2 className="devices-list-title">
               Зарегистрированные устройства
             </h2>
-            <span style={{
-              background: '#667eea',
-              color: 'white',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '20px',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}>
+            <span className="devices-count">
               {devices.length}
             </span>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
+            <div className="loading-text">
               <p>Загрузка устройств...</p>
             </div>
           ) : error ? (
-            <div style={{
-              background: '#fee2e2',
-              border: '1px solid #fecaca',
-              borderRadius: '12px',
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              color: '#dc2626'
-            }}>
+            <div className="error-card">
               <Icons.AlertCircle />
               <span>{error}</span>
             </div>
           ) : devices.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
+            <div className="empty-state">
               <p>У вас пока нет зарегистрированных устройств</p>
             </div>
           ) : (
@@ -277,75 +222,38 @@ function DevicesView({ apiService, userId, onBack }) {
                 return (
                   <div
                     key={device.deviceId}
-                    style={{
-                      border: isCurrentDevice ? '2px solid #667eea' : '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      padding: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      background: isCurrentDevice ? 'rgba(102, 126, 234, 0.05)' : 'white',
-                      transition: 'all 0.2s'
-                    }}
+                    className={`device-item ${isCurrentDevice ? 'current' : ''}`}
                   >
                     {/* Device Icon */}
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      background: device.platform === 'mobile' 
-                        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                        : device.platform === 'desktop'
-                        ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-                        : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      flexShrink: 0
-                    }}>
+                    <div className={`device-icon-wrapper ${device.platform}`}>
                       {getDeviceIcon(device.platform, device.deviceName)}
                     </div>
 
                     {/* Device Info */}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                    <div className="device-info">
+                      <div className="device-name-wrapper">
+                        <h3 className="device-name">
                           {device.deviceName || 'Неизвестное устройство'}
                         </h3>
                         {isCurrentDevice && (
-                          <span style={{
-                            background: '#10b981',
-                            color: 'white',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                          }}>
+                          <span className="badge">
                             Текущее
                           </span>
                         )}
                         {device.online && (
-                          <span style={{
-                            background: '#10b981',
-                            color: 'white',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                          }}>
+                          <span className="badge">
                             Онлайн
                           </span>
                         )}
                       </div>
-                      <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', marginBottom: '0.25rem' }}>
+                      <p className="device-meta">
                         Платформа: {device.platform || 'web'}
                       </p>
-                      <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>
+                      <p className="device-date">
                         Зарегистрировано: {formatDate(device.registeredAt)}
                       </p>
                       {device.lastSeen && (
-                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '12px', color: '#9ca3af' }}>
+                        <p className="device-date">
                           Активность: {formatDate(device.lastSeen)}
                         </p>
                       )}
@@ -354,21 +262,9 @@ function DevicesView({ apiService, userId, onBack }) {
                     {/* Delete Button */}
                     {!isCurrentDevice && (
                       <button
+                        className="btn-delete"
                         onClick={() => handleDeleteDevice(device.deviceId)}
                         disabled={isDeleting}
-                        style={{
-                          background: isDeleting ? '#f3f4f6' : '#fee2e2',
-                          border: 'none',
-                          borderRadius: '10px',
-                          padding: '0.75rem',
-                          cursor: isDeleting ? 'not-allowed' : 'pointer',
-                          color: isDeleting ? '#9ca3af' : '#dc2626',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="Удалить устройство"
                       >
                         {isDeleting ? (
                           <Icons.RefreshCw />

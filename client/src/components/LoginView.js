@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/modern-ui.css';
+import './LoginView.comfortable.css';
 
 // SVG Icons
 const Icons = {
@@ -72,389 +72,151 @@ function LoginView({ onLogin, onRegister }) {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '1.5rem',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    }}>
-      <div className="login-card" style={{
-        maxWidth: '420px',
-        width: '100%',
-        padding: '2rem',
-        background: 'rgba(255, 255, 255, 0.98)',
-        borderRadius: '24px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        animation: 'slideUp 0.5s ease'
-      }}>
+    <div className="login-container">
+      <div className="login-card">
         {/* Logo */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '2rem',
-          marginTop: '1rem'
-        }}>
+        <div className="login-logo">
           <img 
             src="/logo.png" 
             alt="Почтовик"
-            style={{
-              width: '120px',
-              height: '120px',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))'
-            }}
+            className="login-logo-img"
           />
         </div>
         
-        <h1 style={{
-          textAlign: 'center',
-          fontSize: '28px',
-          fontWeight: '800',
-          color: '#1a1a2e',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.5px'
-        }}>Почтовик</h1>
+        <h1 className="login-title">Почтовик</h1>
         
-        <p style={{
-          textAlign: 'center',
-          color: '#6b7280',
-          fontSize: '15px',
-          marginBottom: '2rem'
-        }}>
-          Безопасный мессенджер
-        </p>
+        <p className="login-subtitle">Безопасный мессенджер</p>
         
         {error && (
-          <div style={{ 
-            backgroundColor: '#fee2e2',
-            padding: '1rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
-            color: '#dc2626',
-            fontWeight: '500',
-            border: '1px solid #fecaca',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
+          <div className="error-message">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
         {view === 'login' ? (
-          <form onSubmit={handleLoginSubmit}>
-            <h2 style={{ 
-              marginBottom: '1.5rem',
-              fontSize: '22px',
-              textAlign: 'center',
-              fontWeight: '700',
-              color: '#1f2937'
-            }}>Вход</h2>
+          <form className="login-form" onSubmit={handleLoginSubmit}>
+            <h2>Вход</h2>
             
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Логин</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
+            <div className="form-group">
+              <label className="form-label">Логин</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
                   <Icons.User />
                 </span>
                 <input
                   type="text"
-                  className="input-modern"
+                  className="login-input"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   required
                   placeholder="alice"
                   autoFocus
-                  style={{ 
-                    width: '100%',
-                    padding: '14px 14px 14px 44px',
-                    fontSize: '16px',
-                    borderRadius: '12px',
-                    border: '2px solid rgba(255, 255, 255, 0.2)',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    color: '#1f2937'
-                  }}
                 />
               </div>
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Пароль</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
+            <div className="form-group">
+              <label className="form-label">Пароль</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
                   <Icons.Lock />
                 </span>
                 <input
                   type="password"
-                  className="input-modern"
+                  className="login-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  style={{ 
-                    width: '100%',
-                    padding: '14px 14px 14px 44px',
-                    fontSize: '16px',
-                    borderRadius: '12px',
-                    border: '2px solid rgba(255, 255, 255, 0.2)',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    color: '#1f2937'
-                  }}
                 />
               </div>
             </div>
 
             <button 
               type="submit" 
-              className="btn-primary-modern" 
+              className="btn-primary" 
               disabled={loading}
-              style={{ 
-                width: '100%',
-                marginBottom: '1rem',
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: '700',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)'
-              }}
             >
               {loading ? '⏳ Вход...' : 'Войти →'}
             </button>
 
             <button 
               type="button" 
-              className="btn-secondary-modern" 
+              className="btn-secondary" 
               onClick={() => setView('register')}
-              style={{ 
-                width: '100%',
-                padding: '14px',
-                fontWeight: '600',
-                fontSize: '15px',
-                borderRadius: '12px',
-                background: '#f3f4f6',
-                color: '#374151',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
             >
               Регистрация
             </button>
           </form>
         ) : (
-          <form onSubmit={handleRegisterSubmit}>
-            <h2 style={{ 
-              marginBottom: '1.5rem',
-              fontSize: '22px',
-              textAlign: 'center',
-              fontWeight: '700',
-              color: '#1f2937'
-            }}>Регистрация</h2>
+          <form className="login-form" onSubmit={handleRegisterSubmit}>
+            <h2>Регистрация</h2>
             
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Логин</label>
+            <div className="form-group">
+              <label className="form-label">Логин</label>
               <input
                 type="text"
-                className="input-modern"
+                className="login-input"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 required
                 placeholder="alice"
-                style={{ 
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '16px',
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: '#1f2937'
-                }}
+                style={{ paddingLeft: '14px' }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Пароль</label>
+            <div className="form-group">
+              <label className="form-label">Пароль</label>
               <input
                 type="password"
-                className="input-modern"
+                className="login-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                style={{ 
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '16px',
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: '#1f2937'
-                }}
+                style={{ paddingLeft: '14px' }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Подтверждение пароля</label>
+            <div className="form-group">
+              <label className="form-label">Подтверждение пароля</label>
               <input
                 type="password"
-                className="input-modern"
+                className="login-input"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                style={{ 
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '16px',
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: '#1f2937'
-                }}
+                style={{ paddingLeft: '14px' }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem',
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151'
-              }}>Никнейм</label>
+            <div className="form-group">
+              <label className="form-label">Никнейм</label>
               <input
                 type="text"
-                className="input-modern"
+                className="login-input"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
                 placeholder="Alice"
-                style={{ 
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '16px',
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: '#1f2937'
-                }}
+                style={{ paddingLeft: '14px' }}
               />
             </div>
 
             <button 
               type="submit" 
-              className="btn-primary-modern" 
+              className="btn-primary" 
               disabled={loading || !userId}
-              style={{ 
-                width: '100%',
-                marginBottom: '1rem',
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: '700',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)'
-              }}
             >
               {loading ? '⏳ Создание...' : 'Создать аккаунт →'}
             </button>
 
             <button 
               type="button" 
-              className="btn-secondary-modern" 
+              className="btn-secondary" 
               onClick={() => setView('login')}
-              style={{ 
-                width: '100%',
-                padding: '14px',
-                fontWeight: '600',
-                fontSize: '15px',
-                borderRadius: '12px',
-                background: '#f3f4f6',
-                color: '#374151',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
             >
               ← Назад ко входу
             </button>

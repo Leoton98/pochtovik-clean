@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/modern-ui.css';
+import './SettingsView.comfortable.css';
 
 // SVG Icons
 const Icons = {
@@ -112,106 +112,28 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
       console.error('Failed to save theme:', e);
     }
   }, [darkMode]);
-  
-  // Theme colors - support both light and dark
-  const theme = {
-    bg: darkMode 
-      ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
-      : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    card: darkMode
-      ? 'rgba(255, 255, 255, 0.05)'
-      : 'rgba(255, 255, 255, 0.9)',
-    text: darkMode ? '#fff' : '#1a1a2e',
-    textSecondary: darkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-    border: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-    inputBg: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'
-  };
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      background: theme.bg,
-      padding: '2rem',
-      fontFamily: "'Inter', sans-serif"
-    }}>
-      <div style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        animation: 'slideUp 0.5s ease'
-      }}>
+    <div className={`settings-container ${darkMode ? '' : 'light-theme'}`}>
+      <div className="settings-content">
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-          padding: '1.5rem 2rem',
-          background: theme.card,
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          border: `1px solid ${theme.border}`,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-        }}>
-          <button
-            onClick={onBack}
-            style={{
-              background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              border: 'none',
-              color: theme.text,
-              padding: '0.75rem 1.25rem',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-              fontWeight: '600',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
-              e.target.style.transform = 'translateX(-4px)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-              e.target.style.transform = 'translateX(0)';
-            }}
-          >
+        <div className="settings-header">
+          <button className="btn-back" onClick={onBack}>
             <Icons.ArrowLeft />
             Назад к чату
           </button>
           
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
+              className="btn-icon"
               onClick={() => setDarkMode(!darkMode)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '0.75rem',
-                borderRadius: '12px',
-                color: theme.text,
-                transition: 'all 0.2s'
-              }}
               title={darkMode ? 'Светлая тема' : 'Тёмная тема'}
             >
               {darkMode ? <Icons.Sun /> : <Icons.Moon />}
             </button>
             <button
+              className="btn-logout"
               onClick={onLogout}
-              style={{
-                background: 'rgba(245, 87, 108, 0.8)',
-                border: 'none',
-                color: '#fff',
-                padding: '0.75rem 1.25rem',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: '600'
-              }}
             >
               <Icons.Logout />
               Выход
@@ -220,61 +142,15 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
         </div>
 
         {/* Main Content */}
-        <div style={{
-          background: theme.card,
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          padding: '2rem',
-          border: `1px solid ${theme.border}`,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '2rem',
-            paddingBottom: '1rem',
-            borderBottom: `2px solid ${theme.border}`
-          }}>
+        <div className="settings-card">
+          <div className="settings-title-wrapper">
             <Icons.Settings />
-            <h2 style={{ 
-              margin: 0,
-              fontSize: '1.8rem',
-              fontWeight: '700',
-              color: theme.text
-            }}>Настройки</h2>
+            <h2 className="settings-title">Настройки</h2>
           </div>
 
           {/* Devices Management Button */}
           {onOpenDevices && (
-            <button
-              onClick={onOpenDevices}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                marginBottom: '2rem',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                borderRadius: '12px',
-                color: 'white',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
+            <button className="btn-devices" onClick={onOpenDevices}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
                 <line x1="12" y1="18" x2="12.01" y2="18"></line>
@@ -284,66 +160,23 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
           )}
 
           {/* Account Information */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem',
-              marginBottom: '1.5rem',
-              paddingBottom: '0.75rem',
-              borderBottom: `1px solid ${theme.border}`
-            }}>
+          <div className="section">
+            <div className="section-title-wrapper">
               <Icons.User />
-              <h3 style={{ 
-                margin: 0,
-                fontSize: '1.3rem',
-                fontWeight: '600',
-                color: theme.text
-              }}>Информация об аккаунте</h3>
+              <h3 className="section-title">Информация об аккаунте</h3>
             </div>
             
             {/* Avatar Upload */}
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-              <label style={{
-                display: 'inline-block',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'scale(1)';
-              }}
-              >
+            <div className="avatar-upload">
+              <label className="avatar-label">
                 {userAvatar ? (
                   <img 
                     src={userAvatar} 
                     alt="Avatar"
-                    style={{
-                      width: '120px',
-                      height: '120px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                      border: `4px solid ${darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
-                    }}
+                    className="avatar-img"
                   />
                 ) : (
-                  <div style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '3rem',
-                    fontWeight: '700',
-                    color: '#fff',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                    border: `4px solid ${darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
-                  }}>
+                  <div className="avatar-placeholder">
                     {(user.displayName || user.userId).charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -354,179 +187,72 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
                   style={{ display: 'none' }}
                 />
               </label>
-              <p style={{
-                marginTop: '1rem',
-                color: theme.textSecondary,
-                fontSize: '0.85rem'
-              }}>
+              <p className="avatar-hint">
                 Нажмите чтобы изменить аватарку
               </p>
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                color: theme.textSecondary,
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>User ID</label>
-              <div style={{ 
-                padding: '0.75rem', 
-                background: theme.inputBg, 
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                fontSize: '0.95rem',
-                color: theme.text
-              }}>
+            <div className="form-field">
+              <label className="form-label">User ID</label>
+              <div className="form-value">
                 {user.userId}
               </div>
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                color: theme.textSecondary,
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>Display Name</label>
+            <div className="form-field">
+              <label className="form-label">Display Name</label>
               <input
                 type="text"
+                className="form-input"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Введите ваше имя"
-                style={{ 
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: theme.inputBg,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '8px',
-                  color: theme.text,
-                  fontSize: '0.95rem'
-                }}
               />
             </div>
 
-            <button 
-              onClick={() => alert('Сохранение не реализовано')} 
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
+            <button className="btn-save" onClick={() => alert('Сохранение не реализовано')}>
               Сохранить изменения
             </button>
           </div>
 
           {/* Connection Info */}
-          <div>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem',
-              marginBottom: '1.5rem',
-              paddingBottom: '0.75rem',
-              borderBottom: `1px solid ${theme.border}`
-            }}>
+          <div className="section">
+            <div className="section-title-wrapper">
               <Icons.Server />
-              <h3 style={{ 
-                margin: 0,
-                fontSize: '1.3rem',
-                fontWeight: '600',
-                color: theme.text
-              }}>Подключение</h3>
+              <h3 className="section-title">Подключение</h3>
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                color: theme.textSecondary,
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>Name Server URL</label>
-              <div style={{ 
-                display: 'flex',
-                gap: '0.5rem',
-                alignItems: 'center'
-              }}>
+            <div className="form-field">
+              <label className="form-label">Name Server URL</label>
+              <div className="connection-wrapper">
                 <input
                   type="text"
+                  className={`connection-input ${connectionStatus === 'error' ? 'error' : ''}`}
                   value={nameServerUrl}
                   onChange={(e) => setNameServerUrl(e.target.value)}
                   placeholder="https://pochtovik-name-server.onrender.com"
-                  style={{ 
-                    flex: 1,
-                    padding: '0.75rem',
-                    background: theme.inputBg,
-                    border: `1px solid ${connectionStatus === 'error' ? '#f5576c' : theme.border}`,
-                    borderRadius: '8px',
-                    color: theme.text,
-                    fontSize: '0.85rem',
-                    fontFamily: 'monospace',
-                    outline: 'none',
-                    transition: 'all 0.2s'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = connectionStatus === 'error' ? '#f5576c' : theme.border;
-                  }}
                 />
                 <button
+                  className={`btn-check ${connectionStatus === 'connected' ? 'connected' : ''} ${connectionStatus === 'error' ? 'error' : ''}`}
                   onClick={checkConnection}
                   disabled={connectionStatus === 'checking'}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    background: connectionStatus === 'connected' 
-                      ? '#4caf50' 
-                      : connectionStatus === 'error'
-                      ? '#f5576c'
-                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: connectionStatus === 'checking' ? 'not-allowed' : 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '600',
-                    opacity: connectionStatus === 'checking' ? 0.7 : 1,
-                    transition: 'all 0.2s',
-                    minWidth: '120px'
-                  }}
                 >
                   {connectionStatus === 'checking' ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                    <span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="animate-spin">
                         <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
                       </svg>
                       Проверка...
                     </span>
                   ) : connectionStatus === 'connected' ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                    <span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                       Подключено
                     </span>
                   ) : connectionStatus === 'error' ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                    <span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -538,30 +264,14 @@ function SettingsView({ user, onBack, onLogout, userAvatar, onAvatarUpload, apiS
                   )}
                 </button>
               </div>
-              <p style={{
-                marginTop: '0.5rem',
-                color: theme.textSecondary,
-                fontSize: '0.8rem'
-              }}>
+              <p className="field-hint">
                 Введите адрес сервера для подключения из другой сети
               </p>
             </div>
 
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                color: theme.textSecondary,
-                fontSize: '0.9rem'
-              }}>Yandex Cloud Bucket</label>
-              <div style={{ 
-                padding: '0.75rem', 
-                background: theme.inputBg, 
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                fontSize: '0.85rem',
-                color: theme.text
-              }}>
+            <div className="form-field">
+              <label className="form-label">Yandex Cloud Bucket</label>
+              <div className="form-value">
                 {user.bucket || 'Не настроено'}
               </div>
             </div>
